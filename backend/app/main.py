@@ -4,6 +4,7 @@ from sqlalchemy import text
 
 from app.database import Base, engine
 import app.models  # noqa: F401 - Asegura registro de modelos en SQLAlchemy Base
+from app.routes.clientes import router as clientes_router
 from app.routes.productos import router as productos_router
 
 # Creación automática de tablas mediante SQLAlchemy en desarrollo
@@ -28,7 +29,9 @@ app.add_middleware(
 )
 
 # Registro de routers
+app.include_router(clientes_router, prefix="/api/clientes", tags=["Clientes"])
 app.include_router(productos_router, prefix="/api/productos", tags=["Productos"])
+
 
 
 @app.get("/")

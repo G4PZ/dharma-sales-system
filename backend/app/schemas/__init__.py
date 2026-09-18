@@ -1,3 +1,11 @@
+from app.schemas.client import (
+    ClientBase,
+    ClientCreate,
+    ClientListResponse,
+    ClientResponse,
+    ClientStatsResponse,
+    ClientUpdate,
+)
 from app.schemas.product import (
     ProductAlertItem,
     ProductBase,
@@ -9,6 +17,12 @@ from app.schemas.product import (
 )
 
 __all__ = [
+    "ClientBase",
+    "ClientCreate",
+    "ClientListResponse",
+    "ClientResponse",
+    "ClientStatsResponse",
+    "ClientUpdate",
     "ProductAlertItem",
     "ProductBase",
     "ProductCreate",
@@ -17,3 +31,4 @@ __all__ = [
     "ProductStatsResponse",
     "ProductUpdate",
 ]
+

@@ -1,63 +1,342 @@
-import React from 'react';
-import { Users, Plus, Search, Filter } from 'lucide-react';
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { Leaf, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
+import ClientStatsCards from '@/components/clientes/ClientStatsCards';
+import ClientFilters from '@/components/clientes/ClientFilters';
+import ClientTable from '@/components/clientes/ClientTable';
+import ClientModal from '@/components/clientes/ClientModal';
+import RecentClientsWidget from '@/components/clientes/RecentClientsWidget';
+import ClientBannerWidget from '@/components/clientes/ClientBannerWidget';
+import {
+  Cliente,
+  ClienteCreate,
+  ClienteUpdate,
+  ClientStats,
+} from '@/types/client';
+import {
+  fetchClients,
+  fetchClientStats,
+  createClient,
+  updateClient,
+  toggleClientStatus,
+} from '@/services/clientService';
 
 export default function ClientesPage() {
+  // Estados de datos
+  const [clients, setClients] = useState<Cliente[]>([]);
+  const [total, setTotal] = useState<number>(0);
+  const [stats, setStats] = useState<ClientStats | null>(null);
+
+  // Estados de carga y feedback
+  const [loading, setLoading] = useState<boolean>(true);
+  const [statsLoading, setStatsLoading] = useState<boolean>(true);
+  const [toastMessage, setToastMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
+
+  // Estados de filtros y paginación
+  const [search, setSearch] = useState<string>('');
+  const [debouncedSearch, setDebouncedSearch] = useState<string>('');
+  const [tipoCliente, setTipoCliente] = useState<string>('todos');
+  const [estado, setEstado] = useState<string>('todos');
+  const [ciudad, setCiudad] = useState<string>('todas');
+  const [skip, setSkip] = useState<number>(0);
+  const [limit, setLimit] = useState<number>(10);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
+
+  // Estado del modal
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [clientToEdit, setClientToEdit] = useState<Cliente | null>(null);
+
+  // Toast notification
+  const showToast = useCallback((type: 'success' | 'error', text: string) => {
+    setToastMessage({ type, text });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  }, []);
+
+  // Debounce para búsqueda
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setSkip(0);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  // Carga de datos
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadData() {
+      try {
+        const [clientsRes, statsRes] = await Promise.all([
+          fetchClients({
+            search: debouncedSearch,
+            tipo_cliente: tipoCliente,
+            estado,
+            ciudad,
+            skip,
+            limit,
+          }),
+          fetchClientStats(),
+        ]);
+
+        if (!ignore) {
+          setClients(clientsRes.items);
+          setTotal(clientsRes.total);
+          setStats(statsRes);
+          setLoading(false);
+          setStatsLoading(false);
+        }
+      } catch (error: unknown) {
+        if (!ignore) {
+          const msg =
+            error instanceof Error ? error.message : 'Error al cargar clientes';
+          showToast('error', msg);
+          setLoading(false);
+          setStatsLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      ignore = true;
+    };
+  }, [
+    debouncedSearch,
+    tipoCliente,
+    estado,
+    ciudad,
+    skip,
+    limit,
+    refreshTrigger,
+    showToast,
+  ]);
+
+  // Reset de filtros
+  const handleResetFilters = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setTipoCliente('todos');
+    setEstado('todos');
+    setCiudad('todas');
+    setSkip(0);
+  };
+
+  // Manejadores de paginación
+  const handlePageChange = (newPage: number) => {
+    setSkip((newPage - 1) * limit);
+  };
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setSkip(0);
+  };
+
+  // Modal de creación / edición
+  const handleOpenNewModal = () => {
+    setClientToEdit(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (client: Cliente) => {
+    setClientToEdit(client);
+    setIsModalOpen(true);
+  };
+
+  const handleSaveClient = async (
+    data: ClienteCreate | ClienteUpdate
+  ): Promise<void> => {
+    if (clientToEdit) {
+      await updateClient(clientToEdit.id, data as ClienteUpdate);
+      showToast('success', `Cliente '${data.razon_social}' actualizado con éxito.`);
+    } else {
+      await createClient(data as ClienteCreate);
+      showToast('success', `Cliente '${data.razon_social}' registrado con éxito.`);
+    }
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  // Activar / Desactivar
+  const handleToggleStatus = async (client: Cliente) => {
+    try {
+      const updated = await toggleClientStatus(client.id);
+      const newStatusText = updated.is_active ? 'activado' : 'desactivado';
+      showToast(
+        'success',
+        `Cliente '${client.razon_social}' ${newStatusText}.`
+      );
+      setRefreshTrigger((prev) => prev + 1);
+    } catch (error: unknown) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : 'Error al cambiar estado del cliente';
+      showToast('error', msg);
+    }
+  };
+
+  // Lista de ciudades disponibles dinámicas
+  const availableCities = Array.from(
+    new Set([
+      'Lima',
+      'Callao',
+      'Arequipa',
+      'Trujillo',
+      ...clients.map((c) => c.ciudad).filter(Boolean) as string[],
+    ])
+  );
+
+  // Formato de fecha localizado
+  const formattedToday = new Intl.DateTimeFormat('es-PE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
+
+  const capitalizedDate =
+    formattedToday.charAt(0).toUpperCase() + formattedToday.slice(1);
+
   return (
     <div className="space-y-6">
-      {/* Page Header */}
+      {/* Notificación Toast */}
+      {toastMessage && (
+        <div
+          className={`fixed top-20 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-semibold animate-in slide-in-from-top-2 duration-200 ${
+            toastMessage.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-rose-50 border-rose-200 text-rose-800'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
+      {/* Encabezado con Botón + Nuevo Cliente y Slogan */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Clientes
-          </h2>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Directorio comercial y cartera de clientes de Dharma E.I.R.L.
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              Gestión de Clientes
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
+            <span className="font-medium text-slate-700">{capitalizedDate}</span>{' '}
+            | Administra y consulta la información de tus clientes
           </p>
         </div>
 
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] text-white text-sm font-semibold rounded-xl shadow-sm hover:bg-blue-700 transition-colors self-start sm:self-auto cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nuevo Cliente</span>
-        </button>
-      </div>
-
-      {/* Main Base Card */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-xs p-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por RUC, DNI o Razón Social..."
-              className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200/80 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              readOnly
-            />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 self-start sm:self-auto">
+          {/* Tagline superior */}
+          <div className="hidden xl:flex items-center gap-2 text-xs font-normal text-slate-400 italic mr-2">
+            <span>Soluciones que mantienen tu mundo en movimiento</span>
+            <Leaf className="w-4 h-4 text-blue-400 fill-blue-100 shrink-0 not-italic" />
           </div>
 
           <button
             type="button"
-            className="flex items-center gap-2 px-3.5 py-2 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl hover:bg-slate-50 transition-colors self-end sm:self-auto"
+            onClick={handleOpenNewModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
           >
-            <Filter className="w-3.5 h-3.5 text-slate-500" />
-            <span>Filtrar</span>
+            <Plus className="w-4 h-4" />
+            <span>Nuevo cliente</span>
           </button>
         </div>
+      </div>
 
-        <div className="py-16 flex flex-col items-center justify-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
-            <Users className="w-7 h-7" />
+      {/* 4 Tarjetas KPI Superiores */}
+      <ClientStatsCards
+        stats={stats}
+        loading={statsLoading}
+        onFilterStatus={(st) => {
+          setEstado(st);
+          setSkip(0);
+        }}
+        onFilterTipo={(tipo) => {
+          setTipoCliente(tipo);
+          setSkip(0);
+        }}
+      />
+
+      {/* Grid Principal: Columna de Tabla (Col 8/9) + Columna Lateral (Col 4/3) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Columna Principal: Filtros y Tabla */}
+        <div className="lg:col-span-8 xl:col-span-9 space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-2xs p-6">
+            {/* Filtros y Búsqueda */}
+            <ClientFilters
+              search={search}
+              tipoCliente={tipoCliente}
+              estado={estado}
+              ciudad={ciudad}
+              onSearchChange={setSearch}
+              onTipoClienteChange={(val) => {
+                setTipoCliente(val);
+                setSkip(0);
+              }}
+              onEstadoChange={(val) => {
+                setEstado(val);
+                setSkip(0);
+              }}
+              onCiudadChange={(val) => {
+                setCiudad(val);
+                setSkip(0);
+              }}
+              onResetFilters={handleResetFilters}
+              availableCities={availableCities}
+            />
+
+            {/* Tabla de Clientes */}
+            <div className="mt-6">
+              <ClientTable
+                clients={clients}
+                total={total}
+                skip={skip}
+                limit={limit}
+                loading={loading}
+                onPageChange={handlePageChange}
+                onLimitChange={handleLimitChange}
+                onEdit={handleOpenEditModal}
+                onToggleStatus={handleToggleStatus}
+              />
+            </div>
           </div>
-          <h3 className="text-base font-bold text-slate-800">
-            Módulo de Clientes
-          </h3>
-          <p className="text-xs text-slate-500 max-w-md mt-1">
-            Estructura visual base lista para la consulta de RUC/DNI, registro de razones sociales, contactos comerciales y créditos.
-          </p>
+        </div>
+
+        {/* Columna Lateral Derecha */}
+        <div className="lg:col-span-4 xl:col-span-3 space-y-6">
+          {/* Widget de Clientes Recientes con datos reales */}
+          <RecentClientsWidget
+            recentClients={stats?.ultimos_clientes || []}
+            onSelectClient={handleOpenEditModal}
+            onViewAll={handleResetFilters}
+          />
+
+          {/* Banner comercial Dharma */}
+          <ClientBannerWidget />
         </div>
       </div>
+
+      {/* Modal de Registro / Edición */}
+      <ClientModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSaveClient}
+        clientToEdit={clientToEdit}
+        existingCities={availableCities}
+      />
     </div>
   );
 }
