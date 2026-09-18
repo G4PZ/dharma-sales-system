@@ -1,12 +1,34 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from app.database import engine
+from app.database import Base, engine
+import app.models  # noqa: F401 - Asegura registro de modelos en SQLAlchemy Base
+from app.routes.productos import router as productos_router
+
+# Creación automática de tablas mediante SQLAlchemy en desarrollo
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Dharma Sales API",
-    version="0.1.0"
+    version="0.1.0",
+    description="API para la gestión de ventas e inventario de Dharma E.I.R.L."
 )
+
+# Configuración de CORS para permitir comunicación con el Frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Registro de routers
+app.include_router(productos_router, prefix="/api/productos", tags=["Productos"])
 
 
 @app.get("/")
