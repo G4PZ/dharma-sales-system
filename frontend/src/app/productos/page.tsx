@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Leaf, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
 import ProductStatsCards from '@/components/productos/ProductStatsCards';
 import ProductFilters from '@/components/productos/ProductFilters';
@@ -22,7 +23,9 @@ import {
   toggleProductStatus,
 } from '@/services/productService';
 
-export default function ProductosPage() {
+function ProductosContent() {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get('search');
   // Estados de datos
   const [products, setProducts] = useState<Producto[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -71,6 +74,15 @@ export default function ProductosPage() {
     }, 300);
     return () => clearTimeout(handler);
   }, [search]);
+
+  // Sincronizar parámetro search de la URL
+  useEffect(() => {
+    if (urlSearch !== null) {
+      setSearch(urlSearch);
+      setDebouncedSearch(urlSearch);
+      setSkip(0);
+    }
+  }, [urlSearch]);
 
   // Carga asíncrona de datos
   useEffect(() => {
@@ -344,5 +356,19 @@ export default function ProductosPage() {
         onCancel={handleCancelToggleStatus}
       />
     </div>
+  );
+}
+
+export default function ProductosPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-xs text-slate-500">
+          Cargando catálogo de productos...
+        </div>
+      }
+    >
+      <ProductosContent />
+    </Suspense>
   );
 }

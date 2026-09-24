@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Leaf, Plus, CheckCircle2, AlertCircle } from 'lucide-react';
 import ClientStatsCards from '@/components/clientes/ClientStatsCards';
 import ClientFilters from '@/components/clientes/ClientFilters';
@@ -22,7 +23,9 @@ import {
   toggleClientStatus,
 } from '@/services/clientService';
 
-export default function ClientesPage() {
+function ClientesContent() {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get('search');
   // Estados de datos
   const [clients, setClients] = useState<Cliente[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -67,6 +70,15 @@ export default function ClientesPage() {
     }, 300);
     return () => clearTimeout(handler);
   }, [search]);
+
+  // Sincronizar parámetro search de la URL
+  useEffect(() => {
+    if (urlSearch !== null) {
+      setSearch(urlSearch);
+      setDebouncedSearch(urlSearch);
+      setSkip(0);
+    }
+  }, [urlSearch]);
 
   // Carga de datos
   useEffect(() => {
@@ -318,5 +330,19 @@ export default function ClientesPage() {
         onConfirm={handleConfirmToggleStatus}
       />
     </div>
+  );
+}
+
+export default function ClientesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-xs text-slate-500">
+          Cargando directorio de clientes...
+        </div>
+      }
+    >
+      <ClientesContent />
+    </Suspense>
   );
 }

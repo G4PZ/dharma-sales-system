@@ -1,48 +1,63 @@
 'use client';
 
-import React from 'react';
-import { Menu, Search, Bell, ChevronDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Search, Bell, ChevronDown, X } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
 }
 
 export default function Header({ onToggleSidebar }: HeaderProps) {
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 md:px-8 bg-white border-b border-slate-200/80 shadow-xs">
-      {/* Left side: Hamburger + Search Input */}
-      <div className="flex items-center gap-3 md:gap-6 flex-1 max-w-xl">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 text-slate-600 rounded-lg hover:bg-slate-100 lg:hidden focus:outline-none focus:ring-2 focus:ring-slate-200"
-          aria-label="Abrir menú"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-
-        {/* Global Search Input */}
-        <div className="relative w-full max-w-md hidden sm:block">
-          <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
-            <Search className="w-4 h-4" />
-          </div>
-          <input
-            type="text"
-            placeholder="Buscar productos, clientes, ventas..."
-            className="w-full pl-10 pr-4 py-2 text-sm bg-slate-100/80 border border-slate-200/80 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-            readOnly
+      {/* Mobile search bar overlay */}
+      {mobileSearchOpen ? (
+        <div className="flex sm:hidden items-center gap-2 w-full">
+          <GlobalSearch
+            className="flex-1"
+            onCloseMobile={() => setMobileSearchOpen(false)}
           />
+          <button
+            type="button"
+            onClick={() => setMobileSearchOpen(false)}
+            className="p-2 text-slate-500 hover:text-slate-700 rounded-xl hover:bg-slate-100 cursor-pointer"
+            aria-label="Cerrar búsqueda"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Left side: Hamburger + Search Input */}
+          <div className="flex items-center gap-3 md:gap-6 flex-1 max-w-xl">
+            <button
+              onClick={onToggleSidebar}
+              className="p-2 text-slate-600 rounded-lg hover:bg-slate-100 lg:hidden focus:outline-none focus:ring-2 focus:ring-slate-200"
+              aria-label="Abrir menú"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-      {/* Right side: Notifications + User Profile */}
-      <div className="flex items-center gap-3 md:gap-5">
-        {/* Mobile Search Icon Button */}
-        <button
-          className="p-2 text-slate-600 rounded-xl hover:bg-slate-100 sm:hidden"
-          aria-label="Buscar"
-        >
-          <Search className="w-5 h-5" />
-        </button>
+            {/* Global Search Input */}
+            <div className="w-full max-w-md hidden sm:block">
+              <GlobalSearch />
+            </div>
+          </div>
+
+          {/* Right side: Notifications + User Profile */}
+          <div className="flex items-center gap-3 md:gap-5">
+            {/* Mobile Search Icon Button */}
+            <button
+              type="button"
+              onClick={() => setMobileSearchOpen(true)}
+              className="p-2 text-slate-600 rounded-xl hover:bg-slate-100 sm:hidden cursor-pointer"
+              aria-label="Buscar"
+            >
+              <Search className="w-5 h-5" />
+            </button>
 
         {/* Notifications Button with Red Badge */}
         <button
@@ -75,6 +90,8 @@ export default function Header({ onToggleSidebar }: HeaderProps) {
           <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors hidden sm:block" />
         </div>
       </div>
+        </>
+      )}
     </header>
   );
 }

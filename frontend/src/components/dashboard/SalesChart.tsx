@@ -44,7 +44,7 @@ export default function SalesChart() {
           {yAxisSteps.map((val) => (
             <div key={val} className="flex items-center w-full">
               <span className="w-12 text-[11px] font-normal text-slate-400 text-right pr-3 shrink-0">
-                {val === 0 ? '0' : val.toLocaleString()}
+                {val === 0 ? '0' : val.toLocaleString('es-PE')}
               </span>
               <div className="flex-1 border-b border-slate-100/90" />
             </div>
@@ -65,22 +65,20 @@ export default function SalesChart() {
                 <div className="w-full max-w-[28px] flex flex-col justify-end h-full">
                   <div
                     style={{ height: `${heightPercent}%` }}
-                    className={`w-full rounded-t-sm transition-all duration-300 group-hover:opacity-90 ${
-                      item.highlight
-                        ? 'bg-[#2563EB] shadow-sm shadow-blue-500/30'
-                        : 'bg-blue-300/80 hover:bg-blue-400'
-                    }`}
-                    title={`${item.month}: S/ ${item.value.toLocaleString()}`}
+                    className={`w-full rounded-t-sm transition-all duration-300 group-hover:opacity-90 ${item.highlight
+                      ? 'bg-[#2563EB] shadow-sm shadow-blue-500/30'
+                      : 'bg-blue-300/80 hover:bg-blue-400'
+                      }`}
+                    title={`${item.month}: S/ ${item.value.toLocaleString('es-PE')}`}
                   />
                 </div>
 
                 {/* X Axis Label */}
                 <span
-                  className={`mt-2 text-[11px] transition-colors ${
-                    item.highlight
-                      ? 'font-bold text-slate-900'
-                      : 'text-slate-500 font-normal'
-                  }`}
+                  className={`mt-2 text-[11px] transition-colors ${item.highlight
+                    ? 'font-bold text-slate-900'
+                    : 'text-slate-500 font-normal'
+                    }`}
                 >
                   {item.month}
                 </span>

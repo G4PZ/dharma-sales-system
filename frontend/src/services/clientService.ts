@@ -14,6 +14,7 @@ export async function fetchClients(params: {
   estado?: string;
   skip?: number;
   limit?: number;
+  signal?: AbortSignal;
 }): Promise<ClientListResponse> {
   const query = new URLSearchParams();
 
@@ -25,7 +26,7 @@ export async function fetchClients(params: {
   if (params.limit !== undefined) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE_URL}/api/clientes${query.toString() ? `?${query.toString()}` : ''}`;
-  const response = await fetch(url, { cache: 'no-store' });
+  const response = await fetch(url, { cache: 'no-store', signal: params.signal });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
