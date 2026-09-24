@@ -17,10 +17,8 @@ router = APIRouter()
 
 @router.get("", response_model=ClientListResponse, summary="Listar clientes con filtros y paginación")
 def list_clients(
-    search: Optional[str] = Query(None, description="Búsqueda por RUC/DNI, razón social, contacto o correo"),
-    tipo_cliente: Optional[str] = Query(None, description="Filtrar por tipo: 'Empresa', 'Persona', 'todos'"),
+    search: Optional[str] = Query(None, description="Búsqueda por RUC, razón social, contacto o correo"),
     estado: Optional[str] = Query(None, description="Filtrar por estado: 'activo', 'inactivo', 'todos'"),
-    ciudad: Optional[str] = Query(None, description="Filtrar por ciudad o departamento"),
     skip: int = Query(0, ge=0, description="Cantidad de registros a omitir"),
     limit: int = Query(10, ge=1, le=100, description="Cantidad de registros por página"),
     db: Session = Depends(get_db),
@@ -28,9 +26,7 @@ def list_clients(
     return client_service.get_clients(
         db=db,
         search=search,
-        tipo_cliente=tipo_cliente,
         estado=estado,
-        ciudad=ciudad,
         skip=skip,
         limit=limit,
     )

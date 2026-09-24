@@ -11,15 +11,13 @@ from app.schemas.client import ClientCreate, ClientUpdate
 def get_clients(
     db: Session,
     search: Optional[str] = None,
-    tipo_cliente: Optional[str] = None,
     estado: Optional[str] = None,
-    ciudad: Optional[str] = None,
     skip: int = 0,
     limit: int = 50,
 ) -> dict:
     query = db.query(Cliente)
 
-    # Filtro de búsqueda textual por documento, razón social, contacto o correo
+    # Filtro de búsqueda textual por RUC, razón social, contacto o correo
     if search and search.strip():
         term = f"%{search.strip()}%"
         query = query.filter(
@@ -31,10 +29,6 @@ def get_clients(
             )
         )
 
-    # Filtro por tipo de cliente (Empresa / Persona)
-    if tipo_cliente and tipo_cliente.strip().lower() not in ("todos", "todas", ""):
-        query = query.filter(Cliente.tipo_cliente.ilike(tipo_cliente.strip()))
-
     # Filtro por estado activo / inactivo
     if estado:
         est = estado.strip().lower()
@@ -42,10 +36,6 @@ def get_clients(
             query = query.filter(Cliente.is_active.is_(True))
         elif est in ("inactivo", "inactivos", "false"):
             query = query.filter(Cliente.is_active.is_(False))
-
-    # Filtro por ciudad
-    if ciudad and ciudad.strip().lower() not in ("todas", "todos", ""):
-        query = query.filter(Cliente.ciudad.ilike(ciudad.strip()))
 
     total = query.count()
     items = query.order_by(Cliente.id.asc()).offset(skip).limit(limit).all()
@@ -73,10 +63,16 @@ def create_client(db: Session, client_in: ClientCreate) -> Cliente:
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Ya existe un cliente registrado con el número de documento '{client_in.numero_documento}'."
+            detail=f"Ya existe un cliente registrado con el RUC '{client_in.numero_documento}'."
         )
 
     client_data = client_in.model_dump()
+    # Reglas fijas del negocio Dharma
+    client_data["tipo_documento"] = "RUC"
+    client_data["tipo_cliente"] = "Empresa"
+    client_data["ciudad"] = "Trujillo"
+    client_data["is_active"] = True
+
     client = Cliente(**client_data)
     db.add(client)
     db.commit()
@@ -84,19 +80,22 @@ def create_client(db: Session, client_in: ClientCreate) -> Cliente:
     return client
 
 
+ALLOWED_UPDATE_FIELDS = {"nombre_contacto", "telefono", "email", "direccion"}
+
+
 def update_client(db: Session, db_client: Cliente, client_in: ClientUpdate) -> Cliente:
     update_data = client_in.model_dump(exclude_unset=True)
 
-    if "numero_documento" in update_data and update_data["numero_documento"] != db_client.numero_documento:
-        existing = get_client_by_document(db, update_data["numero_documento"])
-        if existing and existing.id != db_client.id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"El documento '{update_data['numero_documento']}' ya está en uso por otro cliente."
-            )
-
+    # Lista blanca estricta como segunda capa de seguridad (RUC y Razón Social son inmutables)
     for field, value in update_data.items():
-        setattr(db_client, field, value)
+        if field in ALLOWED_UPDATE_FIELDS:
+            setattr(db_client, field, value)
+
+    # Las reglas tipo_documento = "RUC", tipo_cliente = "Empresa" y ciudad = "Trujillo"
+    # deben aplicarse también al actualizar un cliente
+    db_client.tipo_documento = "RUC"
+    db_client.tipo_cliente = "Empresa"
+    db_client.ciudad = "Trujillo"
 
     db.commit()
     db.refresh(db_client)

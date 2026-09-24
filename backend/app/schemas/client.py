@@ -4,16 +4,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ClientBase(BaseModel):
-    tipo_documento: str = Field("RUC", max_length=20, description="Tipo de documento: RUC, DNI, CE")
-    numero_documento: str = Field(..., min_length=8, max_length=20, description="Número de RUC o DNI")
-    razon_social: str = Field(..., min_length=1, max_length=255, description="Nombre o Razón Social")
+    numero_documento: str = Field(
+        ...,
+        min_length=11,
+        max_length=11,
+        pattern=r"^\d{11}$",
+        description="Número de RUC (exactamente 11 dígitos numéricos)"
+    )
+    razon_social: str = Field(..., min_length=1, max_length=255, description="Razón Social de la empresa")
     nombre_contacto: Optional[str] = Field(None, max_length=150, description="Persona de contacto")
     telefono: Optional[str] = Field(None, max_length=50, description="Teléfono de contacto")
     email: Optional[str] = Field(None, max_length=150, description="Correo electrónico")
-    direccion: Optional[str] = Field(None, max_length=255, description="Dirección fiscal o de entrega")
-    ciudad: Optional[str] = Field("Lima", max_length=100, description="Ciudad o departamento")
-    tipo_cliente: str = Field("Empresa", max_length=50, description="Tipo de cliente: Empresa o Persona")
-    is_active: bool = Field(True, description="Estado activo / inactivo")
+    direccion: Optional[str] = Field(None, max_length=255, description="Dirección fiscal o de entrega en Trujillo")
 
 
 class ClientCreate(ClientBase):
@@ -21,16 +23,12 @@ class ClientCreate(ClientBase):
 
 
 class ClientUpdate(BaseModel):
-    tipo_documento: Optional[str] = Field(None, max_length=20)
-    numero_documento: Optional[str] = Field(None, min_length=8, max_length=20)
-    razon_social: Optional[str] = Field(None, min_length=1, max_length=255)
-    nombre_contacto: Optional[str] = Field(None, max_length=150)
-    telefono: Optional[str] = Field(None, max_length=50)
-    email: Optional[str] = Field(None, max_length=150)
-    direccion: Optional[str] = Field(None, max_length=255)
-    ciudad: Optional[str] = Field(None, max_length=100)
-    tipo_cliente: Optional[str] = Field(None, max_length=50)
-    is_active: Optional[bool] = None
+    model_config = ConfigDict(extra="forbid")
+
+    nombre_contacto: Optional[str] = Field(None, max_length=150, description="Persona de contacto")
+    telefono: Optional[str] = Field(None, max_length=50, description="Teléfono de contacto")
+    email: Optional[str] = Field(None, max_length=150, description="Correo electrónico")
+    direccion: Optional[str] = Field(None, max_length=255, description="Dirección fiscal o de entrega en Trujillo")
 
 
 class ClientResponse(BaseModel):

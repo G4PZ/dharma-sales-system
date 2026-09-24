@@ -108,12 +108,11 @@ export default function ClientTable({
                   aria-label="Seleccionar todos los clientes"
                 />
               </th>
-              <th className="py-3.5 px-3 whitespace-nowrap">RUC / DNI</th>
+              <th className="py-3.5 px-3 whitespace-nowrap">RUC</th>
               <th className="py-3.5 px-3">Nombre / Razón Social</th>
               <th className="py-3.5 px-3">Contacto</th>
               <th className="py-3.5 px-3">Teléfono</th>
               <th className="py-3.5 px-3">Correo</th>
-              <th className="py-3.5 px-3 text-center">Tipo</th>
               <th className="py-3.5 px-4 text-center">Estado</th>
               <th className="py-3.5 pl-3 pr-1 text-center">Acciones</th>
             </tr>
@@ -121,20 +120,20 @@ export default function ClientTable({
           <tbody className="divide-y divide-slate-50 font-normal text-slate-700">
             {loading ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-slate-400">
+                <td colSpan={8} className="py-16 text-center text-slate-400">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                    <span>Cargando directorio de clientes...</span>
+                    <span>Cargando directorio de empresas...</span>
                   </div>
                 </td>
               </tr>
             ) : clients.length === 0 ? (
               <tr>
-                <td colSpan={9} className="py-16 text-center text-slate-500">
+                <td colSpan={8} className="py-16 text-center text-slate-500">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <Users className="w-8 h-8 text-slate-300" />
                     <span className="font-medium text-slate-700">
-                      No se encontraron clientes
+                      No se encontraron empresas
                     </span>
                     <span className="text-[11px] text-slate-400">
                       Intenta ajustar los términos de búsqueda o filtros.
@@ -145,8 +144,6 @@ export default function ClientTable({
             ) : (
               clients.map((client) => {
                 const isSelected = selectedIds.includes(client.id);
-                const isEmpresa =
-                  client.tipo_cliente.toLowerCase() === 'empresa';
 
                 return (
                   <tr
@@ -166,7 +163,7 @@ export default function ClientTable({
                       />
                     </td>
 
-                    {/* RUC / DNI */}
+                    {/* RUC */}
                     <td className="py-3.5 px-3 text-slate-600 font-mono text-[11px] whitespace-nowrap">
                       {client.numero_documento}
                     </td>
@@ -174,18 +171,8 @@ export default function ClientTable({
                     {/* Razón Social */}
                     <td className="py-3.5 px-3">
                       <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
-                            isEmpresa
-                              ? 'bg-blue-50/80 text-blue-600 border-blue-100'
-                              : 'bg-purple-50/80 text-purple-600 border-purple-100'
-                          }`}
-                        >
-                          {isEmpresa ? (
-                            <Building2 className="w-4 h-4" />
-                          ) : (
-                            <User className="w-4 h-4" />
-                          )}
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border bg-blue-50/80 text-blue-600 border-blue-100">
+                          <Building2 className="w-4 h-4" />
                         </div>
                         <div className="min-w-0">
                           <p className="font-semibold text-slate-900 truncate leading-tight">
@@ -193,8 +180,7 @@ export default function ClientTable({
                           </p>
                           {client.direccion && (
                             <p className="text-[11px] text-slate-400 truncate mt-0.5 leading-tight">
-                              {client.direccion}
-                              {client.ciudad ? ` • ${client.ciudad}` : ''}
+                              {client.direccion} • Trujillo
                             </p>
                           )}
                         </div>
@@ -219,19 +205,6 @@ export default function ClientTable({
                         </span>
                       ) : (
                         '-'
-                      )}
-                    </td>
-
-                    {/* Tipo */}
-                    <td className="py-3.5 px-3 text-center whitespace-nowrap">
-                      {isEmpresa ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-100">
-                          Empresa
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-50 text-purple-700 border border-purple-100">
-                          Persona
-                        </span>
                       )}
                     </td>
 

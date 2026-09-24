@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     telefono VARCHAR(50),
     email VARCHAR(150),
     direccion VARCHAR(255),
-    ciudad VARCHAR(100) DEFAULT 'Lima',
+    ciudad VARCHAR(100) NOT NULL DEFAULT 'Trujillo',
     tipo_cliente VARCHAR(50) NOT NULL DEFAULT 'Empresa',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

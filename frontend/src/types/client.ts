@@ -15,29 +15,19 @@ export interface Cliente {
 }
 
 export interface ClienteCreate {
-  tipo_documento: string;
   numero_documento: string;
   razon_social: string;
   nombre_contacto?: string | null;
   telefono?: string | null;
   email?: string | null;
   direccion?: string | null;
-  ciudad?: string | null;
-  tipo_cliente: string;
-  is_active?: boolean;
 }
 
 export interface ClienteUpdate {
-  tipo_documento?: string;
-  numero_documento?: string;
-  razon_social?: string;
   nombre_contacto?: string | null;
   telefono?: string | null;
   email?: string | null;
   direccion?: string | null;
-  ciudad?: string | null;
-  tipo_cliente?: string;
-  is_active?: boolean;
 }
 
 export interface ClientListResponse {
@@ -57,9 +47,7 @@ export interface ClientStats {
 
 export interface ClientFiltersState {
   search: string;
-  tipo_cliente: string;
   estado: string;
-  ciudad: string;
   skip: number;
   limit: number;
 }

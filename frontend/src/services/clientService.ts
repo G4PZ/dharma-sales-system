@@ -11,23 +11,15 @@ const API_BASE_URL =
 
 export async function fetchClients(params: {
   search?: string;
-  tipo_cliente?: string;
   estado?: string;
-  ciudad?: string;
   skip?: number;
   limit?: number;
 }): Promise<ClientListResponse> {
   const query = new URLSearchParams();
 
   if (params.search?.trim()) query.append('search', params.search.trim());
-  if (params.tipo_cliente && params.tipo_cliente !== 'todos') {
-    query.append('tipo_cliente', params.tipo_cliente);
-  }
   if (params.estado && params.estado !== 'todos') {
     query.append('estado', params.estado);
-  }
-  if (params.ciudad && params.ciudad !== 'todas') {
-    query.append('ciudad', params.ciudad);
   }
   if (params.skip !== undefined) query.append('skip', params.skip.toString());
   if (params.limit !== undefined) query.append('limit', params.limit.toString());

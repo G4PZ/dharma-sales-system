@@ -7,7 +7,7 @@ import ClientFilters from '@/components/clientes/ClientFilters';
 import ClientTable from '@/components/clientes/ClientTable';
 import ClientModal from '@/components/clientes/ClientModal';
 import RecentClientsWidget from '@/components/clientes/RecentClientsWidget';
-import ClientBannerWidget from '@/components/clientes/ClientBannerWidget';
+import ConfirmStatusModal from '@/components/clientes/ConfirmStatusModal';
 import {
   Cliente,
   ClienteCreate,
@@ -39,16 +39,17 @@ export default function ClientesPage() {
   // Estados de filtros y paginación
   const [search, setSearch] = useState<string>('');
   const [debouncedSearch, setDebouncedSearch] = useState<string>('');
-  const [tipoCliente, setTipoCliente] = useState<string>('todos');
   const [estado, setEstado] = useState<string>('todos');
-  const [ciudad, setCiudad] = useState<string>('todas');
   const [skip, setSkip] = useState<number>(0);
   const [limit, setLimit] = useState<number>(10);
   const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
-  // Estado del modal
+  // Estado del modal de formulario
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [clientToEdit, setClientToEdit] = useState<Cliente | null>(null);
+
+  // Estado del modal de confirmación de activación / desactivación
+  const [clientToToggle, setClientToToggle] = useState<Cliente | null>(null);
 
   // Toast notification
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
@@ -76,9 +77,7 @@ export default function ClientesPage() {
         const [clientsRes, statsRes] = await Promise.all([
           fetchClients({
             search: debouncedSearch,
-            tipo_cliente: tipoCliente,
             estado,
-            ciudad,
             skip,
             limit,
           }),
@@ -110,9 +109,7 @@ export default function ClientesPage() {
     };
   }, [
     debouncedSearch,
-    tipoCliente,
     estado,
-    ciudad,
     skip,
     limit,
     refreshTrigger,
@@ -123,9 +120,7 @@ export default function ClientesPage() {
   const handleResetFilters = () => {
     setSearch('');
     setDebouncedSearch('');
-    setTipoCliente('todos');
     setEstado('todos');
-    setCiudad('todas');
     setSkip(0);
   };
 
@@ -155,43 +150,39 @@ export default function ClientesPage() {
   ): Promise<void> => {
     if (clientToEdit) {
       await updateClient(clientToEdit.id, data as ClienteUpdate);
-      showToast('success', `Cliente '${data.razon_social}' actualizado con éxito.`);
+      showToast('success', `Empresa '${clientToEdit.razon_social}' actualizada con éxito.`);
     } else {
-      await createClient(data as ClienteCreate);
-      showToast('success', `Cliente '${data.razon_social}' registrado con éxito.`);
+      const newClient = data as ClienteCreate;
+      await createClient(newClient);
+      showToast('success', `Empresa '${newClient.razon_social}' registrada con éxito.`);
     }
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  // Activar / Desactivar
-  const handleToggleStatus = async (client: Cliente) => {
+  // Abrir modal de confirmación antes de activar o desactivar
+  const handleToggleStatus = (client: Cliente) => {
+    setClientToToggle(client);
+  };
+
+  // Confirmar y ejecutar activación / desactivación
+  const handleConfirmToggleStatus = async (client: Cliente) => {
     try {
       const updated = await toggleClientStatus(client.id);
-      const newStatusText = updated.is_active ? 'activado' : 'desactivado';
+      const newStatusText = updated.is_active ? 'activada' : 'desactivada';
       showToast(
         'success',
-        `Cliente '${client.razon_social}' ${newStatusText}.`
+        `Empresa '${client.razon_social}' ${newStatusText} con éxito.`
       );
       setRefreshTrigger((prev) => prev + 1);
     } catch (error: unknown) {
       const msg =
         error instanceof Error
           ? error.message
-          : 'Error al cambiar estado del cliente';
+          : 'Error al cambiar estado de la empresa';
       showToast('error', msg);
+      throw error;
     }
   };
-
-  // Lista de ciudades disponibles dinámicas
-  const availableCities = Array.from(
-    new Set([
-      'Lima',
-      'Callao',
-      'Arequipa',
-      'Trujillo',
-      ...clients.map((c) => c.ciudad).filter(Boolean) as string[],
-    ])
-  );
 
   // Formato de fecha localizado
   const formattedToday = new Intl.DateTimeFormat('es-PE', {
@@ -224,7 +215,7 @@ export default function ClientesPage() {
         </div>
       )}
 
-      {/* Encabezado con Botón + Nuevo Cliente y Slogan */}
+      {/* Encabezado con Botón + Nueva Empresa y Slogan */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
@@ -234,7 +225,7 @@ export default function ClientesPage() {
           </div>
           <p className="text-xs text-slate-500 mt-1">
             <span className="font-medium text-slate-700">{capitalizedDate}</span>{' '}
-            | Administra y consulta la información de tus clientes
+            | Empresas clientes de Trujillo • Dharma Sales System
           </p>
         </div>
 
@@ -251,7 +242,7 @@ export default function ClientesPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Nuevo cliente</span>
+            <span>Nueva empresa</span>
           </button>
         </div>
       </div>
@@ -264,10 +255,6 @@ export default function ClientesPage() {
           setEstado(st);
           setSkip(0);
         }}
-        onFilterTipo={(tipo) => {
-          setTipoCliente(tipo);
-          setSkip(0);
-        }}
       />
 
       {/* Grid Principal: Columna de Tabla (Col 8/9) + Columna Lateral (Col 4/3) */}
@@ -278,24 +265,13 @@ export default function ClientesPage() {
             {/* Filtros y Búsqueda */}
             <ClientFilters
               search={search}
-              tipoCliente={tipoCliente}
               estado={estado}
-              ciudad={ciudad}
               onSearchChange={setSearch}
-              onTipoClienteChange={(val) => {
-                setTipoCliente(val);
-                setSkip(0);
-              }}
               onEstadoChange={(val) => {
                 setEstado(val);
                 setSkip(0);
               }}
-              onCiudadChange={(val) => {
-                setCiudad(val);
-                setSkip(0);
-              }}
               onResetFilters={handleResetFilters}
-              availableCities={availableCities}
             />
 
             {/* Tabla de Clientes */}
@@ -316,16 +292,13 @@ export default function ClientesPage() {
         </div>
 
         {/* Columna Lateral Derecha */}
-        <div className="lg:col-span-4 xl:col-span-3 space-y-6">
-          {/* Widget de Clientes Recientes con datos reales */}
+        <div className="lg:col-span-4 xl:col-span-3">
+          {/* Widget de Clientes Recientes */}
           <RecentClientsWidget
             recentClients={stats?.ultimos_clientes || []}
             onSelectClient={handleOpenEditModal}
             onViewAll={handleResetFilters}
           />
-
-          {/* Banner comercial Dharma */}
-          <ClientBannerWidget />
         </div>
       </div>
 
@@ -335,7 +308,14 @@ export default function ClientesPage() {
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSaveClient}
         clientToEdit={clientToEdit}
-        existingCities={availableCities}
+      />
+
+      {/* Modal de Confirmación para Activar / Desactivar */}
+      <ConfirmStatusModal
+        isOpen={Boolean(clientToToggle)}
+        client={clientToToggle}
+        onClose={() => setClientToToggle(null)}
+        onConfirm={handleConfirmToggleStatus}
       />
     </div>
   );

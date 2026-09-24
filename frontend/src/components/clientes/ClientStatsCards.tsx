@@ -8,14 +8,12 @@ interface ClientStatsCardsProps {
   stats: ClientStats | null;
   loading?: boolean;
   onFilterStatus?: (status: string) => void;
-  onFilterTipo?: (tipo: string) => void;
 }
 
 export default function ClientStatsCards({
   stats,
   loading = false,
   onFilterStatus,
-  onFilterTipo,
 }: ClientStatsCardsProps) {
   const activos = stats?.clientes_activos ?? 0;
   const nuevos = stats?.nuevos_este_mes ?? 0;
@@ -70,10 +68,7 @@ export default function ClientStatsCards({
       </div>
 
       {/* 3. Empresas Registradas */}
-      <div
-        onClick={() => onFilterTipo && onFilterTipo('Empresa')}
-        className="bg-white rounded-2xl border border-slate-100/90 shadow-2xs p-5 flex flex-col justify-between hover:shadow-xs transition-shadow cursor-pointer group"
-      >
+      <div className="bg-white rounded-2xl border border-slate-100/90 shadow-2xs p-5 flex flex-col justify-between hover:shadow-xs transition-shadow">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold text-slate-500">Empresas registradas</p>
@@ -81,7 +76,7 @@ export default function ClientStatsCards({
               {loading ? '...' : empresas}
             </p>
           </div>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <Building2 className="w-5 h-5" />
           </div>
         </div>

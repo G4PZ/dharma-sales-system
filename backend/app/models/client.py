@@ -13,7 +13,7 @@ class Cliente(Base):
     telefono = Column(String(50), nullable=True)
     email = Column(String(150), index=True, nullable=True)
     direccion = Column(String(255), nullable=True)
-    ciudad = Column(String(100), nullable=True, default="Lima")
+    ciudad = Column(String(100), nullable=False, default="Trujillo")
     tipo_cliente = Column(String(50), nullable=False, default="Empresa")
     is_active = Column(Boolean, nullable=False, default=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Users, Building2, User, ChevronRight } from 'lucide-react';
+import { Users, Building2, ChevronRight } from 'lucide-react';
 import { Cliente } from '@/types/client';
 
 interface RecentClientsWidgetProps {
@@ -43,10 +43,7 @@ export default function RecentClientsWidget({
             No hay registros recientes aún.
           </div>
         ) : (
-          recentClients.slice(0, 5).map((client, index) => {
-            const isEmpresa =
-              client.tipo_cliente.toLowerCase() === 'empresa';
-
+          recentClients.slice(0, 6).map((client, index) => {
             return (
               <div
                 key={client.id}
@@ -66,11 +63,7 @@ export default function RecentClientsWidget({
                         : 'bg-slate-100 text-slate-600 border-slate-200'
                     }`}
                   >
-                    {isEmpresa ? (
-                      <Building2 className="w-4 h-4" />
-                    ) : (
-                      <User className="w-4 h-4" />
-                    )}
+                    <Building2 className="w-4 h-4" />
                   </div>
 
                   <div className="min-w-0">
@@ -78,10 +71,10 @@ export default function RecentClientsWidget({
                       {client.razon_social}
                     </p>
                     <p className="text-[10px] font-mono text-slate-400 mt-0.5 leading-tight">
-                      {client.tipo_documento}: {client.numero_documento}
+                      RUC: {client.numero_documento}
                     </p>
                     <p className="text-[11px] text-slate-500 mt-0.5 leading-tight">
-                      {client.ciudad || 'Lima'} •{' '}
+                      Trujillo •{' '}
                       <span
                         className={
                           client.is_active
