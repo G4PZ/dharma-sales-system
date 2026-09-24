@@ -26,15 +26,12 @@ export interface ProductoCreate {
 }
 
 export interface ProductoUpdate {
-  codigo?: string;
-  nombre?: string;
   descripcion?: string | null;
   categoria?: string;
   precio?: number;
   stock?: number;
   stock_minimo?: number;
   unidad_medida?: string;
-  is_active?: boolean;
 }
 
 export interface ProductListResponse {

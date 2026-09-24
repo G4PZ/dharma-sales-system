@@ -21,15 +21,19 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
-    codigo: Optional[str] = Field(None, min_length=1, max_length=50)
-    nombre: Optional[str] = Field(None, min_length=1, max_length=255)
+    model_config = ConfigDict(extra="forbid")
+
     descripcion: Optional[str] = None
     categoria: Optional[str] = Field(None, min_length=1, max_length=100)
     precio: Optional[Decimal] = Field(None, ge=0)
     stock: Optional[int] = Field(None, ge=0)
     stock_minimo: Optional[int] = Field(None, ge=0)
     unidad_medida: Optional[str] = Field(None, max_length=50)
-    is_active: Optional[bool] = None
+
+
+# Alias en español
+ProductoUpdate = ProductUpdate
+
 
 
 class ProductResponse(BaseModel):

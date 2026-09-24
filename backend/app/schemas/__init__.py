@@ -14,6 +14,7 @@ from app.schemas.product import (
     ProductResponse,
     ProductStatsResponse,
     ProductUpdate,
+    ProductoUpdate,
 )
 
 __all__ = [
@@ -30,5 +31,6 @@ __all__ = [
     "ProductResponse",
     "ProductStatsResponse",
     "ProductUpdate",
+    "ProductoUpdate",
 ]
 

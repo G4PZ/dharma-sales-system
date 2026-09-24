@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Leaf, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Leaf, CheckCircle2, AlertCircle, Plus } from 'lucide-react';
 import ProductStatsCards from '@/components/productos/ProductStatsCards';
 import ProductFilters from '@/components/productos/ProductFilters';
 import ProductTable from '@/components/productos/ProductTable';
 import ProductModal from '@/components/productos/ProductModal';
+import ProductStatusConfirmModal from '@/components/productos/ProductStatusConfirmModal';
 import LowStockAlertsWidget from '@/components/productos/LowStockAlertsWidget';
 import {
   Producto,
@@ -48,6 +49,11 @@ export default function ProductosPage() {
   // Estado del modal de creación / edición
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [productToEdit, setProductToEdit] = useState<Producto | null>(null);
+
+  // Estado del modal de confirmación de activación / desactivación
+  const [productToToggle, setProductToToggle] = useState<Producto | null>(null);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [isTogglingStatus, setIsTogglingStatus] = useState<boolean>(false);
 
   // Manejador de notificaciones Toast
   const showToast = useCallback((type: 'success' | 'error', text: string) => {
@@ -150,27 +156,44 @@ export default function ProductosPage() {
   ): Promise<void> => {
     if (productToEdit) {
       await updateProduct(productToEdit.id, data as ProductoUpdate);
-      showToast('success', `Producto '${data.nombre}' actualizado con éxito.`);
+      showToast('success', `Producto '${productToEdit.nombre}' actualizado con éxito.`);
     } else {
       await createProduct(data as ProductoCreate);
-      showToast('success', `Producto '${data.nombre}' registrado con éxito.`);
+      showToast('success', `Producto '${(data as ProductoCreate).nombre}' registrado con éxito.`);
     }
     setRefreshTrigger((prev) => prev + 1);
   };
 
-  // Manejador de activar / desactivar
-  const handleToggleStatus = async (product: Producto) => {
+  // Manejador de confirmación para activar / desactivar
+  const handleRequestToggleStatus = (product: Producto) => {
+    setProductToToggle(product);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleCancelToggleStatus = () => {
+    setIsConfirmModalOpen(false);
+    setProductToToggle(null);
+  };
+
+  const handleConfirmToggleStatus = async () => {
+    if (!productToToggle) return;
+
     try {
-      const updated = await toggleProductStatus(product.id);
+      setIsTogglingStatus(true);
+      const updated = await toggleProductStatus(productToToggle.id);
       const newStatusText = updated.is_active ? 'activado' : 'desactivado';
-      showToast('success', `Producto '${product.nombre}' ${newStatusText}.`);
+      showToast('success', `Producto '${productToToggle.nombre}' ${newStatusText}.`);
       setRefreshTrigger((prev) => prev + 1);
+      setIsConfirmModalOpen(false);
+      setProductToToggle(null);
     } catch (error: unknown) {
       const msg =
         error instanceof Error
           ? error.message
           : 'Error al cambiar estado del producto';
       showToast('error', msg);
+    } finally {
+      setIsTogglingStatus(false);
     }
   };
 
@@ -207,21 +230,34 @@ export default function ProductosPage() {
         </div>
       )}
 
-      {/* Page Header con Slogan */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Encabezado con Botón + Nuevo Producto y Slogan */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Gestión de Productos
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              Gestión de Productos
+            </h2>
+          </div>
+          <p className="text-xs text-slate-500 mt-1">
             Administra tu catálogo de productos de higiene y suministros
           </p>
         </div>
 
-        {/* Tagline superior derecho */}
-        <div className="flex items-center gap-2 text-xs font-normal text-slate-400 self-start md:self-auto italic">
-          <span>Soluciones que mantienen tu mundo en movimiento</span>
-          <Leaf className="w-4 h-4 text-blue-400 fill-blue-100 shrink-0 not-italic" />
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 self-start sm:self-auto">
+          {/* Tagline superior */}
+          <div className="hidden xl:flex items-center gap-2 text-xs font-normal text-slate-400 italic mr-2">
+            <span>Soluciones que mantienen tu mundo en movimiento</span>
+            <Leaf className="w-4 h-4 text-blue-400 fill-blue-100 shrink-0 not-italic" />
+          </div>
+
+          <button
+            type="button"
+            onClick={handleOpenNewModal}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nuevo producto</span>
+          </button>
         </div>
       </div>
 
@@ -257,7 +293,6 @@ export default function ProductosPage() {
                 setSkip(0);
               }}
               onResetFilters={handleResetFilters}
-              onOpenNewModal={handleOpenNewModal}
               categoriesList={availableCategories}
             />
 
@@ -272,7 +307,7 @@ export default function ProductosPage() {
                 onPageChange={handlePageChange}
                 onLimitChange={handleLimitChange}
                 onEdit={handleOpenEditModal}
-                onToggleStatus={handleToggleStatus}
+                onToggleStatus={handleRequestToggleStatus}
               />
             </div>
           </div>
@@ -298,6 +333,15 @@ export default function ProductosPage() {
         onSubmit={handleSaveProduct}
         productToEdit={productToEdit}
         existingCategories={availableCategories}
+      />
+
+      {/* Modal de Confirmación de Activación / Desactivación */}
+      <ProductStatusConfirmModal
+        isOpen={isConfirmModalOpen}
+        product={productToToggle}
+        isLoading={isTogglingStatus}
+        onConfirm={handleConfirmToggleStatus}
+        onCancel={handleCancelToggleStatus}
       />
     </div>
   );

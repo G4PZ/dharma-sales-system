@@ -88,19 +88,23 @@ def create_product(db: Session, product_in: ProductCreate) -> Producto:
     return product
 
 
+ALLOWED_UPDATE_FIELDS = {
+    "descripcion",
+    "categoria",
+    "precio",
+    "stock",
+    "stock_minimo",
+    "unidad_medida",
+}
+
+
 def update_product(db: Session, db_product: Producto, product_in: ProductUpdate) -> Producto:
     update_data = product_in.model_dump(exclude_unset=True)
 
-    if "codigo" in update_data and update_data["codigo"] != db_product.codigo:
-        existing = get_product_by_code(db, update_data["codigo"])
-        if existing and existing.id != db_product.id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"El código '{update_data['codigo']}' ya está en uso por otro producto."
-            )
-
+    # Segunda capa de seguridad: aplicar únicamente campos permitidos por la lista blanca
     for field, value in update_data.items():
-        setattr(db_product, field, value)
+        if field in ALLOWED_UPDATE_FIELDS:
+            setattr(db_product, field, value)
 
     db.commit()
     db.refresh(db_product)

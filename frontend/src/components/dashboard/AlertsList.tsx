@@ -18,7 +18,7 @@ const notifications: NotificationItem[] = [
   {
     id: '1',
     title: 'Stock bajo',
-    description: 'Paracetamol 500mg - Solo 5 unidades',
+    description: 'Papel Toalla 2m - Solo 5 unidades',
     timeAgo: 'Hace 2 horas',
     icon: TriangleAlert,
     iconBg: 'bg-rose-50',

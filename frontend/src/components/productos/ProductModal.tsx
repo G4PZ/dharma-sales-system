@@ -41,7 +41,6 @@ function ProductModalForm({
     productToEdit?.stock_minimo !== undefined ? String(productToEdit.stock_minimo) : '10'
   );
   const [unidadMedida, setUnidadMedida] = useState(productToEdit?.unidad_medida || 'und');
-  const [isActive, setIsActive] = useState(productToEdit?.is_active ?? true);
 
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,14 +49,17 @@ function ProductModalForm({
     e.preventDefault();
     setError(null);
 
-    if (!codigo.trim()) {
-      setError('El código de producto es obligatorio.');
-      return;
+    if (!isEditing) {
+      if (!codigo.trim()) {
+        setError('El código de producto es obligatorio.');
+        return;
+      }
+      if (!nombre.trim()) {
+        setError('El nombre del producto es obligatorio.');
+        return;
+      }
     }
-    if (!nombre.trim()) {
-      setError('El nombre del producto es obligatorio.');
-      return;
-    }
+
     if (!categoria.trim()) {
       setError('La categoría es obligatoria.');
       return;
@@ -80,17 +82,29 @@ function ProductModalForm({
 
     try {
       setIsSubmitting(true);
-      await onSubmit({
-        codigo: codigo.trim(),
-        nombre: nombre.trim(),
-        descripcion: descripcion.trim() || null,
-        categoria: categoria.trim(),
-        precio: numPrecio,
-        stock: numStock,
-        stock_minimo: numStockMin,
-        unidad_medida: unidadMedida.trim() || 'und',
-        is_active: isActive,
-      });
+      if (isEditing) {
+        // En modo edición solo se actualizan campos comerciales permitidos
+        await onSubmit({
+          descripcion: descripcion.trim() || null,
+          categoria: categoria.trim(),
+          precio: numPrecio,
+          stock: numStock,
+          stock_minimo: numStockMin,
+          unidad_medida: unidadMedida.trim() || 'und',
+        });
+      } else {
+        await onSubmit({
+          codigo: codigo.trim(),
+          nombre: nombre.trim(),
+          descripcion: descripcion.trim() || null,
+          categoria: categoria.trim(),
+          precio: numPrecio,
+          stock: numStock,
+          stock_minimo: numStockMin,
+          unidad_medida: unidadMedida.trim() || 'und',
+          is_active: true,
+        });
+      }
       onClose();
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -142,16 +156,29 @@ function ProductModalForm({
         {/* Código y Categoría */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           <div>
-            <label className="block font-semibold text-slate-700 mb-1">
-              Código SKU / Producto *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-semibold text-slate-700">
+                Código SKU / Producto {isEditing ? '' : '*'}
+              </label>
+              {isEditing && (
+                <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                  Solo lectura
+                </span>
+              )}
+            </div>
             <input
               type="text"
               value={codigo}
               onChange={(e) => setCodigo(e.target.value)}
               placeholder="Ej: P001-0011"
-              className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-              required
+              readOnly={isEditing}
+              disabled={isEditing}
+              className={`w-full px-3 py-2 rounded-xl text-slate-800 transition-colors ${
+                isEditing
+                  ? 'bg-slate-100/80 border border-slate-200 text-slate-500 cursor-not-allowed select-none'
+                  : 'bg-slate-50 border border-slate-200/80 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
+              }`}
+              required={!isEditing}
             />
           </div>
 
@@ -178,16 +205,29 @@ function ProductModalForm({
 
         {/* Nombre */}
         <div>
-          <label className="block font-semibold text-slate-700 mb-1">
-            Nombre del producto *
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block font-semibold text-slate-700">
+              Nombre del producto {isEditing ? '' : '*'}
+            </label>
+            {isEditing && (
+              <span className="text-[10px] font-medium text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                Solo lectura
+              </span>
+            )}
+          </div>
           <input
             type="text"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Ej: Jabón Líquido Antibacterial"
-            className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-            required
+            readOnly={isEditing}
+            disabled={isEditing}
+            className={`w-full px-3 py-2 rounded-xl text-slate-800 transition-colors ${
+              isEditing
+                ? 'bg-slate-100/80 border border-slate-200 text-slate-500 cursor-not-allowed select-none'
+                : 'bg-slate-50 border border-slate-200/80 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500'
+            }`}
+            required={!isEditing}
           />
         </div>
 
@@ -270,21 +310,6 @@ function ProductModalForm({
               required
             />
           </div>
-        </div>
-
-        {/* Estado Activo */}
-        <div className="pt-2">
-          <label className="flex items-center gap-2.5 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) => setIsActive(e.target.checked)}
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-            />
-            <span className="font-semibold text-slate-700">
-              Producto activo y disponible para catálogo
-            </span>
-          </label>
         </div>
 
         {/* Botones de acción */}

@@ -20,9 +20,9 @@ export default function ProductStatsCards({
   const categorias = stats?.categorias_count ?? 0;
   const valorInventario = stats?.valor_inventario
     ? Number(stats.valor_inventario).toLocaleString('es-PE', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
     : '0.00';
 
   return (
@@ -92,7 +92,7 @@ export default function ProductStatsCards({
         </div>
         <div className="flex items-center justify-between mt-4 text-xs">
           <span className="text-slate-400 font-normal">Clasificaciones de productos</span>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
+
         </div>
       </div>
 
@@ -117,7 +117,6 @@ export default function ProductStatsCards({
             </span>
             <span className="text-slate-400 font-normal">vs. mes anterior</span>
           </div>
-          <ChevronRight className="w-4 h-4 text-slate-400" />
         </div>
       </div>
     </div>

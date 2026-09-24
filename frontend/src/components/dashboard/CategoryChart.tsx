@@ -10,9 +10,9 @@ interface CategoryItem {
 }
 
 const categories: CategoryItem[] = [
-  { name: 'Alimentos', percentage: 40, color: '#3B82F6', dotColor: 'bg-blue-500' },
-  { name: 'Limpieza', percentage: 25, color: '#10B981', dotColor: 'bg-emerald-500' },
-  { name: 'Higiene Personal', percentage: 20, color: '#F59E0B', dotColor: 'bg-amber-500' },
+  { name: 'Papel', percentage: 40, color: '#3B82F6', dotColor: 'bg-blue-500' },
+  { name: 'Jabon', percentage: 25, color: '#10B981', dotColor: 'bg-emerald-500' },
+  { name: 'Desinfectante', percentage: 20, color: '#F59E0B', dotColor: 'bg-amber-500' },
   { name: 'Otros', percentage: 15, color: '#8B5CF6', dotColor: 'bg-purple-500' },
 ];
 
