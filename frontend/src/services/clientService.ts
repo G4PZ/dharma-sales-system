@@ -7,7 +7,7 @@ import {
 } from '@/types/client';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function fetchClients(params: {
   search?: string;
@@ -26,7 +26,11 @@ export async function fetchClients(params: {
   if (params.limit !== undefined) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE_URL}/api/clientes${query.toString() ? `?${query.toString()}` : ''}`;
-  const response = await fetch(url, { cache: 'no-store', signal: params.signal });
+  const response = await fetch(url, {
+    cache: 'no-store',
+    signal: params.signal,
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -38,7 +42,10 @@ export async function fetchClients(params: {
 
 export async function fetchClientStats(): Promise<ClientStats> {
   const url = `${API_BASE_URL}/api/clientes/stats`;
-  const response = await fetch(url, { cache: 'no-store' });
+  const response = await fetch(url, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -50,7 +57,10 @@ export async function fetchClientStats(): Promise<ClientStats> {
 
 export async function fetchClientById(id: number): Promise<Cliente> {
   const url = `${API_BASE_URL}/api/clientes/${id}`;
-  const response = await fetch(url, { cache: 'no-store' });
+  const response = await fetch(url, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -68,6 +78,7 @@ export async function createClient(data: ClienteCreate): Promise<Cliente> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -89,6 +100,7 @@ export async function updateClient(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -103,6 +115,7 @@ export async function toggleClientStatus(id: number): Promise<Cliente> {
   const url = `${API_BASE_URL}/api/clientes/${id}/toggle-status`;
   const response = await fetch(url, {
     method: 'PATCH',
+    credentials: 'include',
   });
 
   if (!response.ok) {

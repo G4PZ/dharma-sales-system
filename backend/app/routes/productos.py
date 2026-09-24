@@ -10,9 +10,10 @@ from app.schemas.product import (
     ProductStatsResponse,
     ProductUpdate,
 )
+from app.routes.auth import get_current_user
 from app.services import product_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("", response_model=ProductListResponse, summary="Listar productos con filtros y paginación")

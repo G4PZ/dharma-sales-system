@@ -7,7 +7,7 @@ import {
 } from '@/types/product';
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export async function fetchProducts(params: {
   search?: string;
@@ -34,7 +34,11 @@ export async function fetchProducts(params: {
   if (params.limit !== undefined) query.append('limit', params.limit.toString());
 
   const url = `${API_BASE_URL}/api/productos${query.toString() ? `?${query.toString()}` : ''}`;
-  const response = await fetch(url, { cache: 'no-store', signal: params.signal });
+  const response = await fetch(url, {
+    cache: 'no-store',
+    signal: params.signal,
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -46,7 +50,10 @@ export async function fetchProducts(params: {
 
 export async function fetchProductStats(): Promise<ProductStats> {
   const url = `${API_BASE_URL}/api/productos/stats`;
-  const response = await fetch(url, { cache: 'no-store' });
+  const response = await fetch(url, {
+    cache: 'no-store',
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
@@ -64,6 +71,7 @@ export async function createProduct(data: ProductoCreate): Promise<Producto> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -85,6 +93,7 @@ export async function updateProduct(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
+    credentials: 'include',
   });
 
   if (!response.ok) {
@@ -99,6 +108,7 @@ export async function toggleProductStatus(id: number): Promise<Producto> {
   const url = `${API_BASE_URL}/api/productos/${id}/toggle-status`;
   const response = await fetch(url, {
     method: 'PATCH',
+    credentials: 'include',
   });
 
   if (!response.ok) {

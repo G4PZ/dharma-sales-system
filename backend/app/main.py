@@ -4,6 +4,7 @@ from sqlalchemy import text
 
 from app.database import Base, engine
 import app.models  # noqa: F401 - Asegura registro de modelos en SQLAlchemy Base
+from app.routes.auth import router as auth_router
 from app.routes.clientes import router as clientes_router
 from app.routes.productos import router as productos_router
 
@@ -21,14 +22,14 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Accept", "X-Requested-With"],
 )
 
 # Registro de routers
+app.include_router(auth_router, prefix="/api/auth", tags=["Autenticación"])
 app.include_router(clientes_router, prefix="/api/clientes", tags=["Clientes"])
 app.include_router(productos_router, prefix="/api/productos", tags=["Productos"])
 

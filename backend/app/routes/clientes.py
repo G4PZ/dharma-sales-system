@@ -10,9 +10,10 @@ from app.schemas.client import (
     ClientStatsResponse,
     ClientUpdate,
 )
+from app.routes.auth import get_current_user
 from app.services import client_service
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.get("", response_model=ClientListResponse, summary="Listar clientes con filtros y paginación")
